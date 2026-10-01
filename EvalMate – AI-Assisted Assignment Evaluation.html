@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>EvalMate – AI-Assisted Assignment Evaluation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<style>
+body{background:#f6f7fb;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.up{animation:up .45s ease both}
+.bar{transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.grad{background:linear-gradient(135deg,#4f46e5,#7c3aed 60%,#3b82f6)}
+</style></head>
+<body><div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect}=React;
+const P={home:"M3 12l9-9 9 9M5 10v10h14V10",file:"M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6",users:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8",spark:"M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 16l.7 1.8L21.5 18.5l-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7z",check:"M20 6L9 17l-5-5",bar:"M12 20V10M18 20V4M6 20v-4",set:"M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9L7 7M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1",award:"M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H3v2a3 3 0 0 0 4 3M17 6h4v2a3 3 0 0 1-4 3",x:"M18 6L6 18M6 6l12 12",plus:"M12 5v14M5 12h14",arr:"M5 12h14M12 5l7 7-7 7",out:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9",clock:"M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20M12 6v6l4 2",menu:"M3 6h18M3 12h18M3 18h18",back:"M19 12H5M12 19l-7-7 7-7",cap:"M22 10L12 5 2 10l10 5zM6 12v5c3 2 9 2 12 0v-5"};
+const I=({n,c="w-5 h-5"})=><svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={P[n]}/></svg>;
+
+const CONCEPTS=["Labelled data","Training","Classification","Regression","Feedback loop","Prediction process"];
+const RUBRIC=[["Correctness",4],["Relevance",2],["Completeness",2],["Explanation",2]];
+const INIT=[
+{id:1,name:"Aarav Sharma",roll:"CS21B001",sub:"Submitted",date:"24 Sep 2026",ans:"Supervised learning is a machine learning approach where a model is trained on labelled data, meaning every input example is paired with the correct output. During training, the algorithm learns the mapping between inputs and outputs by minimising an error function.\n\nThere are two main kinds of problems. Classification predicts discrete categories, for example an email spam filter that labels messages as spam or not spam. Regression predicts continuous values, for example estimating house prices from area, location and number of rooms.",res:{rel:92,com:85,cor:90,exp:80,det:[0,1,2,3],fb:"Good explanation of supervised learning with relevant examples. The answer could be improved by explaining how the trained model is used for prediction on unseen data and how errors are fed back to improve it."}},
+{id:2,name:"Priya Verma",roll:"CS21B014",sub:"Submitted",date:"23 Sep 2026",ans:"In supervised learning we give the computer data that already has answers (labels) and it learns from them. After training it can predict the answer for new data. Examples are image classification of cats and dogs, and predicting the price of a car using regression.",res:{rel:88,com:78,cor:84,exp:75,det:[0,1,2,3,5],fb:"Clear and concise answer that mentions labels, training and prediction on new data. Examples are valid. Add detail on how the model's error guides learning (feedback loop) to reach full marks."}},
+{id:3,name:"Rahul Mehta",roll:"CS21B027",sub:"Submitted",date:"25 Sep 2026",ans:"Supervised learning is when a teacher supervises the machine. The machine learns from examples. For example, decision trees and neural networks are supervised learning methods. It is used in many fields like healthcare and banking.",res:{rel:70,com:55,cor:62,exp:50,det:[1],fb:"Partially relevant. The answer does not mention labelled data and names algorithms rather than problem types or concrete examples. Explain classification vs regression and give a real use case."}},
+{id:4,name:"Ananya Singh",roll:"CS21B032",sub:"Late",date:"27 Sep 2026",ans:"Supervised learning uses labelled datasets to train models. The model learns patterns during training and a loss function measures prediction errors that are fed back to adjust weights. Classification example: handwritten digit recognition. Regression example: forecasting temperature. Once trained, the model predicts outputs for new inputs.",res:{rel:95,com:93,cor:94,exp:88,det:[0,1,2,3,4,5],fb:"Excellent, complete answer covering labelled data, training, error feedback and prediction. Examples are well chosen for both classification and regression."}}];
+INIT[0].done=true;INIT[1].done=true;
+const score=r=>+((r.cor/100*4)+(r.rel/100*2)+(r.com/100*2)+(r.exp/100*2)).toFixed(1);
+const ASG=[{t:"Supervised Learning Basics",s:"Artificial Intelligence",m:10,q:1,d:"30 Sep"},{t:"Search Algorithms",s:"Artificial Intelligence",m:20,q:4,d:"12 Sep"},{t:"Normalisation in DBMS",s:"Database Systems",m:15,q:3,d:"05 Sep"}];
+
+const Card=({children,c=""})=><div className={"bg-white rounded-2xl border border-slate-200/70 shadow-sm "+c}>{children}</div>;
+const Badge=({t,k})=>{const m={g:"bg-emerald-50 text-emerald-700",a:"bg-amber-50 text-amber-700",r:"bg-rose-50 text-rose-700",b:"bg-indigo-50 text-indigo-700"};return <span className={"px-2.5 py-1 rounded-full text-xs font-medium "+m[k]}>{t}</span>};
+const Logo=({light})=><div className="flex items-center gap-2"><div className="grad w-9 h-9 rounded-xl flex items-center justify-center text-white"><I n="spark"/></div><span className={"text-xl font-bold "+(light?"text-white":"text-slate-900")}>Eval<span className={light?"text-indigo-200":"text-indigo-600"}>Mate</span></span></div>;
+
+function Landing({go}){return <div className="min-h-screen grad relative overflow-hidden flex flex-col">
+<div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/10 blur-2xl"/><div className="absolute bottom-0 -left-20 w-80 h-80 rounded-full bg-blue-300/20 blur-3xl"/>
+<div className="p-6"><Logo light/></div>
+<div className="flex-1 flex items-center justify-center p-6"><div className="up bg-white/95 backdrop-blur rounded-3xl shadow-2xl p-8 sm:p-12 max-w-xl w-full text-center">
+<div className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-700 bg-indigo-50 rounded-full px-3 py-1 mb-5"><I n="spark" c="w-3.5 h-3.5"/>Powered by AI</div>
+<h1 className="text-3xl sm:text-4xl font-bold text-slate-900">AI-Assisted Assignment Evaluation</h1>
+<p className="text-slate-500 mt-4">EvalMate helps faculty check answers for relevance, completeness and correctness, suggests marks and writes feedback, turning hours of checking into minutes while keeping every decision in faculty hands.</p>
+<div className="grid sm:grid-cols-2 gap-3 mt-8">
+<button onClick={()=>go("faculty")} className="grad text-white rounded-xl py-3 font-semibold flex items-center justify-center gap-2 hover:opacity-90 hover:-translate-y-0.5 transition"><I n="users"/>Faculty Login</button>
+<button onClick={()=>go("student")} className="border-2 border-indigo-200 text-indigo-700 rounded-xl py-3 font-semibold flex items-center justify-center gap-2 hover:bg-indigo-50 hover:-translate-y-0.5 transition"><I n="cap"/>Student Login</button></div>
+<p className="text-xs text-slate-400 mt-5">Prototype demo · no authentication required</p></div></div></div>}
+
+const Stat=({l,v,i,c})=><Card c="p-5 up"><div className={"w-10 h-10 rounded-xl flex items-center justify-center mb-3 "+c}><I n={i}/></div><div className="text-2xl font-bold text-slate-900">{v}</div><div className="text-sm text-slate-500">{l}</div></Card>;
+
+function Dashboard({subs,asg,go}){const ev=subs.filter(s=>s.done);const avg=ev.length?(ev.reduce((a,s)=>a+score(s.res),0)/ev.length).toFixed(1):"–";
+return <div className="space-y-6">
+<div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+<Stat l="Total Assignments" v={asg.length} i="file" c="bg-indigo-50 text-indigo-600"/><Stat l="Total Submissions" v={subs.length} i="users" c="bg-blue-50 text-blue-600"/>
+<Stat l="Pending Evaluations" v={subs.length-ev.length} i="clock" c="bg-amber-50 text-amber-600"/><Stat l="Evaluated" v={ev.length} i="check" c="bg-emerald-50 text-emerald-600"/><Stat l="Average Score" v={avg+(ev.length?" / 10":"")} i="award" c="bg-purple-50 text-purple-600"/></div>
+<div className="grid lg:grid-cols-2 gap-6">
+<Card c="p-5"><h3 className="font-semibold mb-4">Recent Assignments</h3>{asg.slice(0,4).map((a,i)=><div key={i} className="flex items-center justify-between py-3 border-t first:border-0"><div><div className="font-medium text-sm">{a.t}</div><div className="text-xs text-slate-500">{a.s} · {a.m} marks</div></div><span className="text-xs text-slate-400">Due {a.d}</span></div>)}</Card>
+<Card c="p-5"><h3 className="font-semibold mb-4">Recent Evaluation Activity</h3>{[...subs].sort((a,b)=>b.done-a.done).slice(0,4).map(s=><div key={s.id} className="flex items-center gap-3 py-3 border-t first:border-0"><div className={"w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-semibold "+(s.done?"bg-emerald-500":"bg-amber-400")}>{s.name[0]}</div><div className="flex-1 text-sm"><b>{s.name}</b><div className="text-xs text-slate-500">{s.done?"AI evaluated · "+score(s.res)+"/10":"Awaiting AI evaluation"}</div></div>{!s.done&&<button onClick={()=>go("eval",s.id)} className="text-xs text-indigo-600 font-semibold">Evaluate</button>}</div>)}</Card></div></div>}
+
+function Assignments({asg,setAsg,go,toast}){
+const [f,setF]=useState({t:"Supervised Learning Basics",s:"Artificial Intelligence",d:"Answer the following question in 150–200 words.",q:"Explain supervised learning and give two examples.",k:"Labelled data, training, classification, regression, feedback loop, prediction",m:10});
+const [r,setR]=useState(RUBRIC.map(x=>[...x]));const tot=r.reduce((a,x)=>a+(+x[1]||0),0);const u=k=>e=>setF({...f,[k]:e.target.value});
+const inp="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300";
+const save=()=>{setAsg([{t:f.t,s:f.s,m:f.m,q:1,d:"07 Oct"},...asg]);toast("Assignment saved")};
+return <div className="grid lg:grid-cols-3 gap-6"><Card c="p-6 lg:col-span-2 space-y-4 up"><h3 className="font-semibold text-lg">Create Assignment</h3>
+<div className="grid sm:grid-cols-3 gap-4"><label className="sm:col-span-2 text-sm">Title<input className={inp} value={f.t} onChange={u("t")}/></label><label className="text-sm">Maximum marks<input type="number" className={inp} value={f.m} onChange={u("m")}/></label></div>
+<label className="text-sm block">Subject<input className={inp} value={f.s} onChange={u("s")}/></label>
+<label className="text-sm block">Description<textarea rows="2" className={inp} value={f.d} onChange={u("d")}/></label>
+<label className="text-sm block">Question<textarea rows="2" className={inp} value={f.q} onChange={u("q")}/></label>
+<label className="text-sm block">Expected answer / key concepts<textarea rows="2" className={inp} value={f.k} onChange={u("k")}/></label>
+<div><div className="text-sm mb-2">Evaluation rubric</div>{r.map((x,i)=><div key={i} className="flex gap-2 mb-2"><input className={inp} value={x[0]} onChange={e=>setR(r.map((y,j)=>j==i?[e.target.value,y[1]]:y))}/><input type="number" className={inp+" !w-24"} value={x[1]} onChange={e=>setR(r.map((y,j)=>j==i?[y[0],e.target.value]:y))}/><button onClick={()=>setR(r.filter((_,j)=>j!=i))} className="text-slate-400 hover:text-rose-500"><I n="x"/></button></div>)}
+<div className="flex items-center justify-between"><button onClick={()=>setR([...r,["New criterion",1]])} className="text-sm text-indigo-600 font-medium flex items-center gap-1"><I n="plus" c="w-4 h-4"/>Add criterion</button><span className={"text-sm font-semibold "+(tot==f.m?"text-emerald-600":"text-amber-600")}>Rubric total: {tot} / {f.m}</span></div></div>
+<div className="flex gap-3 pt-2"><button onClick={save} className="border border-indigo-200 text-indigo-700 rounded-xl px-5 py-2.5 font-semibold hover:bg-indigo-50">Save Assignment</button><button onClick={()=>{save();go("submissions")}} className="grad text-white rounded-xl px-5 py-2.5 font-semibold flex items-center gap-2 hover:opacity-90"><I n="spark" c="w-4 h-4"/>Start Evaluation</button></div></Card>
+<Card c="p-5 h-fit"><h3 className="font-semibold mb-3">Your Assignments</h3>{asg.map((a,i)=><div key={i} className="py-3 border-t first:border-0"><div className="text-sm font-medium">{a.t}</div><div className="text-xs text-slate-500">{a.s} · {a.m} marks</div></div>)}</Card></div>}
+
+const status=s=>s.done?<Badge t="Evaluated" k="g"/>:<Badge t="Pending" k="a"/>;
+function Subs({subs,go}){return <Card c="overflow-x-auto up"><table className="w-full text-sm min-w-[720px]"><thead className="text-left text-slate-500 bg-slate-50"><tr>{["Student","Roll No.","Submission","Submitted","Evaluation","Score",""].map(h=><th key={h} className="px-5 py-3 font-medium">{h}</th>)}</tr></thead>
+<tbody>{subs.map(s=><tr key={s.id} onClick={()=>go("eval",s.id)} className="border-t hover:bg-indigo-50/40 cursor-pointer"><td className="px-5 py-3 font-medium">{s.name}</td><td className="px-5 text-slate-500">{s.roll}</td><td className="px-5"><Badge t={s.sub} k={s.sub=="Late"?"r":"b"}/></td><td className="px-5 text-slate-500">{s.date}</td><td className="px-5">{status(s)}</td><td className="px-5 font-semibold">{s.done?score(s.res)+" / 10":"–"}</td><td className="px-5 text-indigo-600 font-medium">{s.done?"Review":"Evaluate"} →</td></tr>)}</tbody></table></Card>}
+
+const Meter=({l,v,show})=><div><div className="flex justify-between text-sm mb-1"><span className="text-slate-600">{l}</span><b>{show?v+"%":"…"}</b></div><div className="h-2.5 bg-slate-100 rounded-full overflow-hidden"><div className="bar h-full rounded-full grad" style={{width:show?v+"%":"0%"}}/></div></div>;
+
+function Eval({s,subs,setSubs,go,toast}){
+const [ph,setPh]=useState(s.done?4:0);const steps=["Reading submission…","Checking relevance…","Matching key concepts…","Scoring against rubric…","Generating feedback…"];
+useEffect(()=>{setPh(s.done?4:0)},[s.id]);
+const run=()=>{setPh(1);[2,3,4,5].forEach((p,i)=>setTimeout(()=>setPh(p==5?4:p),(i+1)*900));setTimeout(()=>setPh(10),3700)};
+const fin=ph==4||ph==10||s.done&&ph>=4;const busy=ph>0&&!fin;const r=s.res;const sc=score(r);
+return <div>
+<button onClick={()=>go("submissions")} className="text-sm text-slate-500 flex items-center gap-1 mb-4 hover:text-indigo-600"><I n="back" c="w-4 h-4"/>Back to submissions</button>
+<div className="grid xl:grid-cols-12 gap-5">
+<Card c="p-5 xl:col-span-3 space-y-5 up"><div><div className="text-xs font-semibold text-indigo-600 uppercase mb-1">Question</div><p className="text-sm">Explain supervised learning and give two examples.</p></div>
+<div><div className="text-xs font-semibold text-indigo-600 uppercase mb-2">Key concepts</div><div className="flex flex-wrap gap-1.5">{CONCEPTS.map(c=><span key={c} className="text-xs bg-slate-100 rounded-full px-2.5 py-1">{c}</span>)}</div></div>
+<div><div className="text-xs font-semibold text-indigo-600 uppercase mb-2">Rubric (10)</div>{RUBRIC.map(([n,m])=><div key={n} className="flex justify-between text-sm py-1.5 border-b border-slate-100"><span>{n}</span><b>{m}</b></div>)}</div></Card>
+<Card c="p-5 xl:col-span-5 up"><div className="flex items-center justify-between mb-4"><div><div className="font-semibold">{s.name}</div><div className="text-xs text-slate-500">{s.roll} · {s.date}</div></div><Badge t={s.sub} k={s.sub=="Late"?"r":"b"}/></div>
+<div className="bg-slate-50 rounded-xl p-4 text-sm leading-relaxed text-slate-700 whitespace-pre-line min-h-[260px] relative overflow-hidden">{s.ans}{busy&&<div className="absolute inset-0 bg-gradient-to-b from-transparent via-indigo-200/40 to-transparent animate-pulse"/>}</div>
+<div className="text-xs text-slate-400 mt-2">{s.ans.split(/\s+/).length} words</div></Card>
+<Card c="p-5 xl:col-span-4 up"><div className="flex items-center gap-2 mb-4"><div className="grad w-8 h-8 rounded-lg flex items-center justify-center text-white"><I n="spark" c="w-4 h-4"/></div><h3 className="font-semibold">AI Evaluation Results</h3></div>
+{ph==0&&<div className="text-center py-12"><p className="text-sm text-slate-500 mb-5">Run the AI to analyse this answer against the rubric.</p><button onClick={run} className="grad text-white rounded-xl px-6 py-3 font-semibold hover:opacity-90 inline-flex items-center gap-2"><I n="spark" c="w-4 h-4"/>Run AI Evaluation</button></div>}
+{busy&&<div className="py-12 text-center"><div className="w-12 h-12 mx-auto border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"/><p className="text-sm text-indigo-700 mt-4 font-medium">{steps[Math.min(ph,4)]}</p></div>}
+{fin&&<div className="space-y-4">
+<Meter l="Relevance" v={r.rel} show/><Meter l="Completeness" v={r.com} show/><Meter l="Correctness" v={r.cor} show/>
+<div className="rounded-xl bg-indigo-50 p-4 flex items-center justify-between"><span className="text-sm text-indigo-900 font-medium">Overall score</span><span className="text-3xl font-bold text-indigo-700">{sc}<span className="text-base text-indigo-400"> / 10</span></span></div>
+<div><div className="text-xs font-semibold text-slate-500 uppercase mb-1.5">Detected concepts</div>{CONCEPTS.map((c,i)=>r.det.includes(i)&&<div key={c} className="text-sm text-emerald-700">✓ {c}</div>)}</div>
+<div><div className="text-xs font-semibold text-slate-500 uppercase mb-1.5">Missing concepts</div>{CONCEPTS.every((c,i)=>r.det.includes(i))?<div className="text-sm text-slate-500">None 🎉</div>:CONCEPTS.map((c,i)=>!r.det.includes(i)&&<div key={c} className="text-sm text-rose-600">• {c}</div>)}</div>
+<div className="bg-purple-50 rounded-xl p-4"><div className="text-xs font-semibold text-purple-700 uppercase mb-1">AI feedback</div><p className="text-sm text-slate-700 italic">“{r.fb}”</p></div>
+{!s.done?<button onClick={()=>{setSubs(subs.map(x=>x.id==s.id?{...x,done:true}:x));toast("Evaluation approved and saved")}} className="w-full bg-emerald-600 text-white rounded-xl py-2.5 font-semibold hover:bg-emerald-700">Approve &amp; Save</button>:<div className="text-center text-sm text-emerald-600 font-medium">✓ Approved by faculty</div>}
+<div className="text-[11px] text-slate-400 text-center">AI suggestions are simulated. Faculty has final say.</div></div>}
+</Card></div></div>}
+
+function Results({subs}){const ev=subs.filter(s=>s.done);return <Card c="overflow-x-auto up"><table className="w-full text-sm min-w-[560px]"><thead className="bg-slate-50 text-left text-slate-500"><tr>{["Student","Relevance","Completeness","Correctness","Score"].map(h=><th key={h} className="px-5 py-3 font-medium">{h}</th>)}</tr></thead><tbody>{ev.map(s=><tr key={s.id} className="border-t"><td className="px-5 py-3 font-medium">{s.name}</td><td className="px-5">{s.res.rel}%</td><td className="px-5">{s.res.com}%</td><td className="px-5">{s.res.cor}%</td><td className="px-5 font-bold text-indigo-700">{score(s.res)} / 10</td></tr>)}{!ev.length&&<tr><td className="p-8 text-center text-slate-400" colSpan="5">No approved results yet.</td></tr>}</tbody></table></Card>}
+
+function Analytics({subs}){const ev=subs.filter(s=>s.done);const avg=k=>ev.length?Math.round(ev.reduce((a,s)=>a+s.res[k],0)/ev.length):0;
+return <div className="grid lg:grid-cols-2 gap-6 up"><Card c="p-6 space-y-4"><h3 className="font-semibold">Class average by criterion</h3><Meter l="Relevance" v={avg("rel")} show/><Meter l="Completeness" v={avg("com")} show/><Meter l="Correctness" v={avg("cor")} show/><Meter l="Explanation" v={avg("exp")} show/></Card>
+<Card c="p-6"><h3 className="font-semibold mb-4">Most commonly missed concepts</h3>{CONCEPTS.map((c,i)=>({c,n:subs.filter(s=>!s.res.det.includes(i)).length})).sort((a,b)=>b.n-a.n).map(x=><div key={x.c} className="mb-3"><div className="flex justify-between text-sm mb-1"><span>{x.c}</span><span className="text-slate-500">{x.n}/{subs.length} missed</span></div><div className="h-2 bg-slate-100 rounded-full"><div className="h-full rounded-full bg-rose-400 bar" style={{width:x.n/subs.length*100+"%"}}/></div></div>)}</Card></div>}
+
+function Settings(){const [a,setA]=useState(true),[b,setB]=useState(true);const T=({v,s})=><button onClick={()=>s(!v)} className={"w-11 h-6 rounded-full p-0.5 transition "+(v?"bg-indigo-600":"bg-slate-300")}><div className={"w-5 h-5 bg-white rounded-full transition "+(v?"translate-x-5":"")}/></button>;
+return <Card c="p-6 max-w-xl space-y-5 up"><h3 className="font-semibold">Evaluation Settings</h3><div className="flex justify-between items-center text-sm"><span>Require faculty approval before publishing marks</span><T v={a} s={setA}/></div><div className="flex justify-between items-center text-sm"><span>Show AI feedback to students</span><T v={b} s={setB}/></div><div className="flex justify-between items-center text-sm"><span>Evaluation strictness</span><select className="border rounded-lg px-2 py-1"><option>Balanced</option><option>Lenient</option><option>Strict</option></select></div></Card>}
+
+function Student({out,subs}){const me=subs[0];return <div className="min-h-screen"><div className="bg-white border-b px-6 py-4 flex justify-between items-center"><Logo/><button onClick={out} className="text-sm text-slate-500 flex items-center gap-1"><I n="out" c="w-4 h-4"/>Logout</button></div>
+<div className="max-w-3xl mx-auto p-6 space-y-5 up"><div><h2 className="text-xl font-bold">Welcome, {me.name.split(" ")[0]} 👋</h2><p className="text-sm text-slate-500">{me.roll} · Artificial Intelligence</p></div>
+<Card c="p-6"><div className="flex justify-between items-start"><div><div className="font-semibold">Supervised Learning Basics</div><div className="text-xs text-slate-500">Submitted {me.date}</div></div><div className="text-right"><div className="text-3xl font-bold text-indigo-700">{score(me.res)}<span className="text-base text-slate-400"> / 10</span></div><Badge t="Evaluated" k="g"/></div></div>
+<div className="grid grid-cols-3 gap-4 mt-5">{[["Relevance",me.res.rel],["Completeness",me.res.com],["Correctness",me.res.cor]].map(([l,v])=><div key={l} className="bg-slate-50 rounded-xl p-3 text-center"><div className="text-lg font-bold">{v}%</div><div className="text-xs text-slate-500">{l}</div></div>)}</div>
+<div className="bg-purple-50 rounded-xl p-4 mt-5"><div className="text-xs font-semibold text-purple-700 uppercase mb-1">Feedback</div><p className="text-sm italic text-slate-700">“{me.res.fb}”</p></div></Card></div></div>}
+
+function App(){
+const [role,setRole]=useState(null);const [page,setPage]=useState("dashboard");const [sel,setSel]=useState(1);const [subs,setSubs]=useState(INIT);const [asg,setAsg]=useState(ASG);const [nav,setNav]=useState(false);const [tm,setTm]=useState("");
+const toast=m=>{setTm(m);setTimeout(()=>setTm(""),2200)};
+const go=(p,id)=>{if(id)setSel(id);setPage(p);setNav(false);window.scrollTo(0,0)};
+if(!role)return <Landing go={setRole}/>;
+if(role=="student")return <Student out={()=>setRole(null)} subs={subs}/>;
+const items=[["dashboard","Dashboard","home"],["assignments","Assignments","file"],["submissions","Submissions","users"],["eval","AI Evaluation","spark"],["results","Results","award"],["analytics","Analytics","bar"],["settings","Settings","set"]];
+const cur=items.find(i=>i[0]==page);const s=subs.find(x=>x.id==sel);
+return <div className="min-h-screen flex">
+<aside className={"fixed lg:sticky top-0 z-30 h-screen w-64 bg-white border-r p-5 flex flex-col transition-transform "+(nav?"":"-translate-x-full lg:translate-x-0")}><Logo/>
+<nav className="mt-8 space-y-1 flex-1">{items.map(([k,l,i])=><button key={k} onClick={()=>go(k)} className={"w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition "+(page==k?"grad text-white shadow":"text-slate-600 hover:bg-slate-100")}><I n={i} c="w-[18px] h-[18px]"/>{l}</button>)}</nav>
+<button onClick={()=>setRole(null)} className="flex items-center gap-2 text-sm text-slate-500 px-3 py-2 hover:text-rose-600"><I n="out" c="w-4 h-4"/>Logout</button></aside>
+{nav&&<div className="fixed inset-0 bg-black/30 z-20 lg:hidden" onClick={()=>setNav(false)}/>}
+<main className="flex-1 min-w-0"><header className="bg-white/80 backdrop-blur border-b px-5 py-4 flex items-center gap-3 sticky top-0 z-10"><button className="lg:hidden" onClick={()=>setNav(true)}><I n="menu"/></button><h1 className="font-bold text-lg flex-1">{cur[1]}</h1><div className="flex items-center gap-2 text-sm"><div className="w-8 h-8 rounded-full grad text-white flex items-center justify-center font-semibold">D</div><span className="hidden sm:block text-slate-600">Dr. Desai</span></div></header>
+<div className="p-5 sm:p-6">
+{page=="dashboard"&&<Dashboard subs={subs} asg={asg} go={go}/>}
+{page=="assignments"&&<Assignments asg={asg} setAsg={setAsg} go={go} toast={toast}/>}
+{page=="submissions"&&<Subs subs={subs} go={go}/>}
+{page=="eval"&&<Eval key={s.id} s={s} subs={subs} setSubs={setSubs} go={go} toast={toast}/>}
+{page=="results"&&<Results subs={subs}/>}{page=="analytics"&&<Analytics subs={subs}/>}{page=="settings"&&<Settings/>}</div></main>
+{tm&&<div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-sm px-5 py-3 rounded-xl shadow-xl up z-50">{tm}</div>}</div>}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script></body></html>
